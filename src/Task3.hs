@@ -8,6 +8,7 @@ module Task3 where
 import Prelude hiding (compare, foldl, foldr, Ordering(..))
 
 import Task1 (Tree(..))
+import Task2 (Cmp, compare, listToBST, bstToList, tlookup, tinsert, tdelete)
 
 -- * Type definitions
 
@@ -15,6 +16,9 @@ import Task1 (Tree(..))
 type Map k v = Tree (k, v)
 
 -- * Function definitions
+
+compareKeys :: Ord k => Cmp (k, v)
+compareKeys (k1, _) (k2, _) = compare k1 k2
 
 -- | Construction of 'Map' from association list
 --
@@ -26,7 +30,7 @@ type Map k v = Tree (k, v)
 -- Leaf
 --
 listToMap :: Ord k => [(k, v)] -> Map k v
-listToMap = error "TODO: define listToMap"
+listToMap = listToBST compareKeys
 
 -- | Conversion from 'Map' to association list sorted by key
 --
@@ -38,7 +42,7 @@ listToMap = error "TODO: define listToMap"
 -- []
 --
 mapToList :: Map k v -> [(k, v)]
-mapToList = error "TODO: define mapToList"
+mapToList = bstToList
 
 -- | Searches given 'Map' for a value associated with given key
 --
@@ -53,7 +57,9 @@ mapToList = error "TODO: define mapToList"
 -- Nothing
 --
 mlookup :: Ord k => k -> Map k v -> Maybe v
-mlookup = error "TODO: define mlookup"
+mlookup key tree = case tlookup compareKeys (key, undefined) tree of
+  Just (_, value) -> Just value
+  Nothing -> Nothing
 
 -- | Inserts given key and value into given 'Map'
 --
@@ -70,7 +76,7 @@ mlookup = error "TODO: define mlookup"
 -- Branch (1,'X') Leaf Leaf
 --
 minsert :: Ord k => k -> v -> Map k v -> Map k v
-minsert = error "TODO: define minsert"
+minsert key value = tinsert compareKeys (key, value)
 
 -- | Deletes given key from given 'Map'
 --
@@ -85,4 +91,4 @@ minsert = error "TODO: define minsert"
 -- Leaf
 --
 mdelete :: Ord k => k -> Map k v -> Map k v
-mdelete = error "TODO: define mdelete"
+mdelete key = tdelete compareKeys (key, undefined)
