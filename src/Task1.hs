@@ -33,11 +33,11 @@ data Order = PreOrder | InOrder | PostOrder
 -- >>> torder PostOrder (Just '.') (Branch 'A' Leaf (Branch 'B' Leaf Leaf))
 -- "...BA"
 --
-torder :: Order    -- ^ Order of resulting traversal
-       -> Maybe a  -- ^ Optional leaf value
-       -> Tree a   -- ^ Tree to traverse
-       -> [a]      -- ^ List of values in specified order
-torder = error "TODO: define torder"
+torder :: Order -> Maybe a -> Tree a -> [a]
+torder _ leafVal Leaf = maybeToList leafVal
+torder PreOrder leafVal (Branch x left right) = [x] ++ torder PreOrder leafVal left ++ torder PreOrder leafVal right
+torder InOrder leafVal (Branch x left right) = torder InOrder leafVal left ++ [x] ++ torder InOrder leafVal right
+torder PostOrder leafVal (Branch x left right) = torder PostOrder leafVal left ++ torder PostOrder leafVal right ++ [x]
 
 -- | Returns values of given 'Forest' separated by optional separator
 -- where each 'Tree' is traversed in specified 'Order' with optional leaf value
@@ -51,10 +51,12 @@ torder = error "TODO: define torder"
 -- >>> forder PostOrder (Just '|') (Just '.') [Leaf, Branch 'C' Leaf Leaf, Branch 'A' Leaf (Branch 'B' Leaf Leaf)]
 -- ".|..C|...BA"
 --
-forder :: Order     -- ^ Order of tree traversal
-       -> Maybe a   -- ^ Optional separator between resulting tree orders
-       -> Maybe a   -- ^ Optional leaf value
-       -> Forest a  -- ^ List of trees to traverse
-       -> [a]       -- ^ List of values in specified tree order
-forder = error "TODO: define forder"
+forder :: Order -> Maybe a -> Maybe a -> Forest a -> [a]
+forder _ _ _ [] = []
+forder order _ leafVal [x] = torder order leafVal x
+forder order sep leafVal (t:ts) = torder order leafVal t ++ maybeToList sep ++ forder order sep leafVal ts
 
+
+maybeToList :: Maybe a -> [a]
+maybeToList Nothing = []
+maybeToList (Just x) = [x]

@@ -7,7 +7,7 @@ module Task2 where
 -- that are not supposed to be used in this assignment
 import Prelude hiding (compare, foldl, foldr, Ordering(..))
 
-import Task1 (Tree(..))
+import Task1 (Tree(..), torder, Order(..))
 
 -- * Type definitions
 
@@ -33,7 +33,10 @@ type Cmp a = a -> a -> Ordering
 -- GT
 --
 compare :: Ord a => Cmp a
-compare = error "TODO: define compare"
+compare x y
+  | x < y     = LT
+  | x > y     = GT
+  | otherwise = EQ
 
 -- | Conversion of list to binary search tree
 -- using given comparison function
@@ -46,7 +49,12 @@ compare = error "TODO: define compare"
 -- Leaf
 --
 listToBST :: Cmp a -> [a] -> Tree a
-listToBST = error "TODO: define listToBST"
+listToBST _ [] = Leaf
+listToBST cmp (x:xs) = insertAll cmp xs (Branch x Leaf Leaf)
+
+insertAll :: Cmp a -> [a] -> Tree a -> Tree a
+insertAll _ [] tree = tree
+insertAll cmp (y:ys) tree = insertAll cmp ys (tinsert cmp y tree)
 
 -- | Conversion from binary search tree to list
 --
@@ -62,7 +70,7 @@ listToBST = error "TODO: define listToBST"
 -- []
 --
 bstToList :: Tree a -> [a]
-bstToList = error "TODO: define bstToList"
+bstToList a = torder InOrder Nothing a
 
 -- | Tests whether given tree is a valid binary search tree
 -- with respect to given comparison function
@@ -77,7 +85,15 @@ bstToList = error "TODO: define bstToList"
 -- False
 --
 isBST :: Cmp a -> Tree a -> Bool
-isBST = error "TODO: define isBST"
+isBST cmp tree = isSorted cmp (bstToList tree)
+
+isSorted :: Cmp a -> [a] -> Bool
+isSorted _  []  = True
+isSorted _  [_] = True
+isSorted cmp (x:y:ys) =
+  case cmp x y of
+    LT -> isSorted cmp (y:ys)
+    _ -> False
 
 -- | Searches given binary search tree for
 -- given value with respect to given comparison
@@ -95,7 +111,13 @@ isBST = error "TODO: define isBST"
 -- Just 2
 --
 tlookup :: Cmp a -> a -> Tree a -> Maybe a
-tlookup = error "TODO: define tlookup"
+tlookup _ _ Leaf = Nothing
+tlookup cmp val (Branch x left right) = 
+  case cmp val x of
+    LT -> tlookup cmp val left
+    GT -> tlookup cmp val right
+    EQ -> Just x
+
 
 -- | Inserts given value into given binary search tree
 -- preserving its BST properties with respect to given comparison
@@ -113,7 +135,12 @@ tlookup = error "TODO: define tlookup"
 -- Branch 'a' Leaf Leaf
 --
 tinsert :: Cmp a -> a -> Tree a -> Tree a
-tinsert = error "TODO: define tinsert"
+tinsert _ val Leaf = Branch val Leaf Leaf
+tinsert cmp val (Branch x left right) =
+  case cmp val x of
+    LT -> Branch x (tinsert cmp val left) right
+    GT -> Branch x left (tinsert cmp val right)
+    EQ -> Branch val left right
 
 -- | Deletes given value from given binary search tree
 -- preserving its BST properties with respect to given comparison
@@ -129,4 +156,17 @@ tinsert = error "TODO: define tinsert"
 -- Leaf
 --
 tdelete :: Cmp a -> a -> Tree a -> Tree a
-tdelete = error "TODO: define tdelete"
+tdelete _ _ Leaf = Leaf
+tdelete cmp val (Branch x left right) =
+  case cmp val x of
+    LT -> Branch x (tdelete cmp val left) right
+    GT -> Branch x left (tdelete cmp val right)
+    EQ -> case (left, right) of
+            (Leaf, _) -> right
+            (_, Leaf) -> left
+            _ -> let minRight = (findMin right) in Branch minRight left (tdelete cmp minRight right)
+
+findMin :: Tree a -> a
+findMin Leaf = error "findMin: tree is empty"
+findMin (Branch x Leaf _) = x
+findMin (Branch _ left _) = findMin left
